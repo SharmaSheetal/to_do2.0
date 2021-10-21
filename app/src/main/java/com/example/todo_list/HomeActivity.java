@@ -9,7 +9,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 //import android.app.AlertDialog;
 import android.annotation.SuppressLint;
+import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -169,10 +171,6 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
         mChoose.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent intent = new Intent();
-//                intent.setType("image/*");
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-//                startActivityForResult(Intent.createChooser(intent,"Sample"),SELECT_IMAGE_CODE);
                 t=1;
                 selectImage();
             }
@@ -221,9 +219,6 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
                     task.setError("Task Required");
                     return;
                 }
-//                if (TextUtils.isEmpty(imageEncoded)){
-//                    mImageView
-//                }
                 if (TextUtils.isEmpty(mDescription)) {
                     description.setError("Description Required");
                     return;
@@ -326,12 +321,7 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
             TextView dateTextView = mView.findViewById(R.id.dateTv);
             dateTextView.setText(date);
         }
-//        public void setImage(Bitmap bitmap){
-//
-//            ImageView image = mView.findViewById(R.id.imagetv);
-//            image.setImageBitmap(bitmap);
-//        }
-public void setImg(String img){
+    public void setImg(String img){
     ImageView iv = mView.findViewById((R.id.imageTv));
     byte[] decodedByteArray = android.util.Base64.decode(img, Base64.DEFAULT);
     iv.setImageBitmap(BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.length));
@@ -360,10 +350,6 @@ public void setImg(String img){
         editImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-//                Intent intent = new Intent();
-//                intent.setType("image/*");
-//                intent.setAction(Intent.ACTION_GET_CONTENT);
-//                startActivityForResult(Intent.createChooser(intent,"Sample"),SELECT_IMAGE_CODE);
                 updateImage();
             }
         });
@@ -398,19 +384,22 @@ public void setImg(String img){
                 task = mTask.getText().toString().trim();
                 description = mDescription.getText().toString().trim();
                 updatedate = mDate.getText().toString().trim();
-//                Model model = new Model(task, description, key, updatedate);
-//
-//                reference.child(key).setValue(model).addOnCompleteListener(new OnCompleteListener<Void>() {
-//                    @Override
-//                    public void onComplete(@NonNull Task<Void> task) {
-//                        if(task.isSuccessful()){
-//                            Toast.makeText(HomeActivity.this, "Data has been updated successfully.", Toast.LENGTH_SHORT).show();
-//                        }else{
-//                            String err = task.getException().toString();
-//                            Toast.makeText(HomeActivity.this, "Update failed "+err, Toast.LENGTH_SHORT).show();
-//                        }
-//                    }
-//                });
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                photo.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                String imageEncoded = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                Model model = new Model(task, description, key, updatedate,imageEncoded);
+
+                reference.child(key).setValue(model).addOnCompleteListener(new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if(task.isSuccessful()){
+                            Toast.makeText(HomeActivity.this, "Data has been updated successfully.", Toast.LENGTH_SHORT).show();
+                        }else{
+                            String err = task.getException().toString();
+                            Toast.makeText(HomeActivity.this, "Update failed "+err, Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
 
                 dialog.dismiss();
 
