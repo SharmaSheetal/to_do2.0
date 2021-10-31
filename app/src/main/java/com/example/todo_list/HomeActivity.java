@@ -11,6 +11,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.DatePickerDialog;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -19,6 +21,7 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -54,6 +57,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import com.google.firebase.storage.StorageReference;
@@ -95,7 +99,7 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_home);
-
+        ArrayList<String> dates= new ArrayList<String>();
 //        mImageView = myView.findViewById(R.id.imageView);
 //        mChoose = myView.findViewById(R.id.tvimage);
 //
@@ -236,6 +240,23 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
                         @Override
                         public void onComplete(@NonNull Task<Void> task) {
                             if (task.isSuccessful()) {
+                                Intent intent = new Intent(HomeActivity.this, ReminderBroadcast.class);
+                                PendingIntent pendingIntent = PendingIntent.getBroadcast(HomeActivity.this, 0, intent, 0);
+                                AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+                                String [] dateParts = date.split("/");
+                                int day = Integer.parseInt(dateParts[0]);
+                                int month = Integer.parseInt(dateParts[1]);
+                                int year = Integer.parseInt(dateParts[2]);
+                                Calendar cal = Calendar.getInstance();
+                                cal.set(year-1+1, month-1, day+1-1, 20, 10, 00);
+                                long mili = cal.getTimeInMillis();
+                                cal.setTimeInMillis(mili);
+                                Calendar calendarCurrent = Calendar.getInstance();
+                                long miliCurrent = calendarCurrent.getTimeInMillis();
+                                calendarCurrent.setTimeInMillis(miliCurrent);
+                                long diff = mili - miliCurrent;
+                                long currentTime = System.currentTimeMillis();
+                                alarmManager.set(AlarmManager.RTC_WAKEUP, currentTime + diff, pendingIntent);
                                 Toast.makeText(HomeActivity.this, "Task has been inserted successfully", Toast.LENGTH_SHORT).show();
                                 loader.dismiss();
                             } else {
@@ -249,6 +270,7 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
                 }
                 dialog.dismiss();
             }
+
         });
 
         dialog.show();
@@ -266,6 +288,7 @@ public class HomeActivity<requestCode, FirebaseStorage> extends AppCompatActivit
             @Override
             protected void onBindViewHolder(@NonNull MyViewHolder holder, final int position, @NonNull Model model) {
                 holder.setDate(model.getDate());
+
                 holder.setTask(model.getTask());
                 holder.setDesc(model.getDescription());
                 holder.setImg(model.getImage());
@@ -731,6 +754,17 @@ private void selectImage() {
 //        ImageView image = findViewById(R.id.imageTv);
 //        image.setImageBitmap(bitmap);
 //    }
+private void createNotificationChannel(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+            CharSequence name = "LemubitReminderChannel";
+            String description = "Channel for Lemubit Reminder";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+        NotificationChannel channel =new NotificationChannel("notifyLembit",name,importance);
+        channel.setDescription(description);
+        NotificationManager notificationManager= getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
+    }
+}
 
 
 }
